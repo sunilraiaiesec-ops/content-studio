@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: content_studio
+      POSTGRES_PASSWORD: content_studio
+      POSTGRES_DB: content_studio
+    volumes:
+      - content_studio_pg:/var/lib/postgresql/data
+
+volumes:
+  content_studio_pg:

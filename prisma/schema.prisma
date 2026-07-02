@@ -1,0 +1,355 @@
+// Content Studio — AI-assisted social media content management
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+enum ContentStatus {
+  DRAFT
+  NEEDS_REVIEW
+  APPROVED
+  REJECTED
+  SCHEDULED
+  POSTED
+}
+
+enum MediaType {
+  PHOTO
+  VIDEO
+}
+
+enum Platform {
+  INSTAGRAM
+  TIKTOK
+}
+
+enum PostFormat {
+  FEED_POST
+  REEL
+  STORY
+  TIKTOK_VIDEO
+  CAROUSEL
+}
+
+enum PromptKind {
+  IMAGE
+  VIDEO
+  CAPTION
+  HASHTAGS
+  STORY_IDEA
+}
+
+enum PublishMode {
+  AUTO
+  MANUAL
+}
+
+enum GenerationJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role     @default(ADMIN)
+  createdAt    DateTime @default(now())
+
+  reviewedContent GeneratedContent[] @relation("ReviewedBy")
+
+  @@map("users")
+}
+
+model TalentProfile {
+  id               String   @id @default(cuid())
+  displayName      String
+  slug             String   @unique
+  notes            String?
+  higgsfieldSoulId String?
+  createdAt        DateTime @default(now())
+
+  originalMedia    OriginalMedia[]
+  generatedContent GeneratedContent[]
+  socialAccounts   SocialAccount[]
+  calendars        PostingCalendar[]
+  generationJobs   GenerationJob[]
+
+  @@map("talent_profiles")
+}
+
+model OriginalMedia {
+  id           String    @id @default(cuid())
+  talentId     String
+  type         MediaType
+  title        String?
+  description  String?
+  tags         String[]  @default([])
+  outfitTags   String[]  @default([])
+  poseTags     String[]  @default([])
+  locationTags String[]  @default([])
+  moodTags     String[]  @default([])
+  storageKey   String
+  mimeType     String
+  fileName     String
+  fileSize     Int
+  width        Int?
+  height       Int?
+  durationSec  Float?
+  capturedAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  talent      TalentProfile  @relation(fields: [talentId], references: [id], onDelete: Cascade)
+  outfitRefs  Outfit[]       @relation("OutfitSourceMedia")
+  promptRefs  PromptMediaRef[]
+
+  @@index([talentId, createdAt])
+  @@map("original_media")
+}
+
+model InspirationLink {
+  id           String    @id @default(cuid())
+  url          String    @unique
+  platform     Platform?
+  creator      String?
+  caption      String?
+  notes        String?
+  outfitStyle  String?
+  pose         String?
+  cameraAngle  String?
+  transition   String?
+  background   String?
+  mood         String?
+  music        String?
+  editingStyle String?
+  tags         String[]  @default([])
+  thumbnailUrl String?
+  createdAt    DateTime  @default(now())
+
+  prompts         GeneratedPrompt[]
+  generationJobs  GenerationJob[]
+
+  @@map("inspiration_links")
+}
+
+model Outfit {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  tags          String[] @default([])
+  season        String?
+  storageKey    String?
+  mimeType      String?
+  fileName      String?
+  sourceMediaId String?
+  createdAt     DateTime @default(now())
+
+  sourceMedia OriginalMedia? @relation("OutfitSourceMedia", fields: [sourceMediaId], references: [id])
+
+  @@map("outfits")
+}
+
+model GeneratedPrompt {
+  id             String        @id @default(cuid())
+  kind           PromptKind    @default(VIDEO)
+  promptText     String
+  negativePrompt String?
+  model          String?
+  parameters     Json?
+  inspirationId  String?
+  status         ContentStatus @default(DRAFT)
+  createdAt      DateTime      @default(now())
+
+  inspiration InspirationLink? @relation(fields: [inspirationId], references: [id])
+  mediaRefs   PromptMediaRef[]
+  outputs     GeneratedContent[]
+  jobs        GenerationJob[]
+
+  @@map("generated_prompts")
+}
+
+model PromptMediaRef {
+  id       String @id @default(cuid())
+  promptId String
+  mediaId  String
+  role     String
+
+  prompt GeneratedPrompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  media  OriginalMedia   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([promptId, mediaId, role])
+  @@map("prompt_media_refs")
+}
+
+model GeneratedContent {
+  id            String        @id @default(cuid())
+  talentId      String
+  promptId      String?
+  title         String?
+  type          MediaType
+  format        PostFormat?
+  status        ContentStatus @default(DRAFT)
+  storageKey    String
+  thumbnailKey  String?
+  mimeType      String
+  fileName      String
+  fileSize      Int
+  width         Int?
+  height        Int?
+  durationSec   Float?
+  rejectionNote String?
+  reviewedById  String?
+  reviewedAt    DateTime?
+  metadata      Json?
+  createdAt     DateTime      @default(now())
+
+  talent     TalentProfile    @relation(fields: [talentId], references: [id], onDelete: Cascade)
+  prompt     GeneratedPrompt? @relation(fields: [promptId], references: [id])
+  reviewedBy User?            @relation("ReviewedBy", fields: [reviewedById], references: [id])
+  caption    Caption?
+  hashtagSet HashtagSet?
+  scheduled  ScheduledPost[]
+  generationJob GenerationJob?
+
+  @@index([talentId, status])
+  @@map("generated_content")
+}
+
+model Caption {
+  id        String   @id @default(cuid())
+  contentId String   @unique
+  text      String
+  cta       String?
+  createdAt DateTime @default(now())
+
+  content GeneratedContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@map("captions")
+}
+
+model HashtagSet {
+  id        String   @id @default(cuid())
+  contentId String   @unique
+  tags      String[] @default([])
+  createdAt DateTime @default(now())
+
+  content GeneratedContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@map("hashtag_sets")
+}
+
+model SocialAccount {
+  id           String    @id @default(cuid())
+  talentId     String
+  platform     Platform
+  handle       String
+  externalId   String?
+  accessToken  String?
+  refreshToken String?
+  tokenExpires DateTime?
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+
+  talent TalentProfile   @relation(fields: [talentId], references: [id], onDelete: Cascade)
+  posts  ScheduledPost[]
+
+  @@unique([talentId, platform, handle])
+  @@map("social_accounts")
+}
+
+model PostingCalendar {
+  id        String   @id @default(cuid())
+  talentId  String
+  name      String   @default("60-Day Growth Sprint")
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+  targets   Json
+  createdAt DateTime @default(now())
+
+  talent TalentProfile   @relation(fields: [talentId], references: [id], onDelete: Cascade)
+  posts  ScheduledPost[]
+
+  @@map("posting_calendars")
+}
+
+model ScheduledPost {
+  id             String        @id @default(cuid())
+  calendarId     String?
+  contentId      String
+  accountId      String?
+  platform       Platform
+  format         PostFormat
+  scheduledAt    DateTime
+  status         ContentStatus @default(SCHEDULED)
+  publishedAt    DateTime?
+  externalPostId String?
+  publishMode    PublishMode   @default(MANUAL)
+  manualNotes    String?
+  errorMessage   String?
+  createdAt      DateTime      @default(now())
+
+  calendar  PostingCalendar?       @relation(fields: [calendarId], references: [id])
+  content   GeneratedContent       @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  account   SocialAccount?         @relation(fields: [accountId], references: [id])
+  analytics PerformanceAnalytics[]
+
+  @@index([scheduledAt, status])
+  @@index([platform, format])
+  @@map("scheduled_posts")
+}
+
+model PerformanceAnalytics {
+  id              String   @id @default(cuid())
+  scheduledPostId String
+  fetchedAt       DateTime @default(now())
+  views           Int?
+  likes           Int?
+  comments        Int?
+  shares          Int?
+  saves           Int?
+  reach           Int?
+  raw             Json?
+
+  scheduledPost ScheduledPost @relation(fields: [scheduledPostId], references: [id], onDelete: Cascade)
+
+  @@index([scheduledPostId, fetchedAt])
+  @@map("performance_analytics")
+}
+
+model GenerationJob {
+  id                  String              @id @default(cuid())
+  talentId            String
+  inspirationId       String?
+  promptId            String?
+  contentId           String?             @unique
+  status              GenerationJobStatus @default(PENDING)
+  format              PostFormat          @default(REEL)
+  errorMessage        String?
+  higgsfieldRequestId String?
+  metadata            Json?
+  createdAt           DateTime            @default(now())
+  completedAt         DateTime?
+
+  talent      TalentProfile     @relation(fields: [talentId], references: [id], onDelete: Cascade)
+  inspiration InspirationLink?  @relation(fields: [inspirationId], references: [id])
+  prompt      GeneratedPrompt?  @relation(fields: [promptId], references: [id])
+  content     GeneratedContent? @relation(fields: [contentId], references: [id])
+
+  @@index([talentId, status])
+  @@index([createdAt])
+  @@map("generation_jobs")
+}
