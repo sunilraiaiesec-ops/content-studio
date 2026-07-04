@@ -76,12 +76,14 @@ model User {
 }
 
 model TalentProfile {
-  id               String   @id @default(cuid())
-  displayName      String
-  slug             String   @unique
-  notes            String?
-  higgsfieldSoulId String?
-  createdAt        DateTime @default(now())
+  id                        String   @id @default(cuid())
+  displayName               String
+  slug                      String   @unique
+  notes                     String?
+  higgsfieldSoulId          String?
+  whatsappPhone             String?
+  whatsappNotifyOnReview    Boolean  @default(true)
+  createdAt                 DateTime @default(now())
 
   originalMedia    OriginalMedia[]
   generatedContent GeneratedContent[]

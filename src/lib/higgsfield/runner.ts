@@ -211,6 +211,9 @@ export async function runAutoGeneration(
       },
     });
 
+    const { notifyContentNeedsReview } = await import("@/lib/notifications/review-ready");
+    void notifyContentNeedsReview(content, talent);
+
     return { jobId: job.id, contentId: content.id, status: "COMPLETED" };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Generation failed";
