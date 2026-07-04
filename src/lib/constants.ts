@@ -50,5 +50,6 @@ export const NAV_ITEMS = [
   { href: "/calendar", label: "Calendar", icon: "▦" },
   { href: "/queue", label: "Publish Queue", icon: "▶" },
   { href: "/settings/generation", label: "Generation", icon: "⚡" },
+  { href: "/settings/notifications", label: "WhatsApp", icon: "💬" },
   { href: "/settings/accounts", label: "Accounts", icon: "⚙" },
 ] as const;

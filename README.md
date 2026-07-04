@@ -111,7 +111,7 @@ Use **Fill today's schedule** or **Fill next 7 days** on the dashboard to auto-a
 ## Phase 2 roadmap
 
 - Daily cron auto-generation (`POST /api/cron/generate` + CRON_SECRET)
-- Email/WhatsApp review notifications
+- ~~Email/WhatsApp review notifications~~ — WhatsApp implemented; see **Settings → WhatsApp**
 - Instagram Graph API publishing
 - TikTok Content Posting API
 - AI caption and hashtag generation
