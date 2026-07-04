@@ -96,15 +96,27 @@ export default async function NotificationsSettingsPage() {
             .
           </li>
           <li>
-            Add a phone number and copy the Phone Number ID and permanent access token to{" "}
-            <code className="rounded bg-zinc-200 px-1">.env</code>.
+            In <strong>WhatsApp → API Setup</strong>, copy the access token and Phone Number ID
+            into <code className="rounded bg-zinc-200 px-1">.env</code>. Add your phone as a test
+            recipient while the app is in Development mode.
           </li>
           <li>
-            For reliable proactive alerts, create an approved template named e.g.{" "}
-            <code className="rounded bg-zinc-200 px-1">content_review_ready</code> with body
-            parameters: talent name, content summary, review URL.
+            Restart the dev server after changing <code className="rounded bg-zinc-200 px-1">.env</code>.
           </li>
-          <li>Add your personal WhatsApp number above and send a test message.</li>
+          <li>
+            <strong>Quick dev test:</strong> message your business WhatsApp number from your phone,
+            then use <strong>Send test ping</strong> below (plain text works for 24h after your last
+            inbound message).
+          </li>
+          <li>
+            <strong>Production / cron:</strong> create an approved template in WhatsApp Manager:
+            name <code className="rounded bg-zinc-200 px-1">content_review_ready</code>, body{" "}
+            <code className="rounded bg-zinc-200 px-1">
+              Hi! New content for {"{{1}}"} is ready: {"{{2}}"}. Review: {"{{3}}"}
+            </code>
+            , then set <code className="rounded bg-zinc-200 px-1">WHATSAPP_REVIEW_TEMPLATE_NAME</code>.
+          </li>
+          <li>Add your personal WhatsApp number above and save.</li>
         </ol>
         <p className="mt-4 text-xs text-zinc-500">
           Messages are sent automatically when Higgsfield generation finishes (dashboard Generate or{" "}
