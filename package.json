@@ -14,7 +14,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "docker:up": "docker compose up -d",
-    "docker:down": "docker compose down"
+    "docker:down": "docker compose down",
+    "whatsapp:verify-parser": "tsx src/lib/whatsapp/verify-parser.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
